@@ -1,0 +1,219 @@
+unit uImpressao;
+
+interface
+
+uses
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.Imaging.pngimage,
+  ppCtrls, ppParameter, ppDesignLayer, ppBands, ppPrnabl, ppClass, ppCache,
+  ppComm, ppRelatv, ppProd, ppReport, Registry, ShellAPI, Data.DB,
+  Data.Win.ADODB, Vcl.Grids, Vcl.DBGrids, Vcl.ExtCtrls, Vcl.Buttons, ppDB,
+  ppDBPipe, Vcl.ComCtrls;
+
+type
+  TfrmEtiqueta = class(TForm)
+    ppVisitante: TppReport;
+    ppParameterList3: TppParameterList;
+    ppDesignLayers3: TppDesignLayers;
+    ppDesignLayer3: TppDesignLayer;
+    ppHeaderBand3: TppHeaderBand;
+    ppDetailBand3: TppDetailBand;
+    ppFooterBand3: TppFooterBand;
+    ppImage3: TppImage;
+    ppLabel12: TppLabel;
+    ppLabel13: TppLabel;
+    conecta: TADOConnection;
+    qryPaciente: TADOQuery;
+    dsPaciente: TDataSource;
+    dbgrdPaciente: TDBGrid;
+    pnl1: TPanel;
+    lbl1: TLabel;
+    lbl2: TLabel;
+    img1: TImage;
+    edtBuscaPaciente: TEdit;
+    btnBuscaPaciente: TSpeedButton;
+    qryEtiqueta: TADOQuery;
+    dsEtiqueta: TDataSource;
+    pdbVisitante: TppDBPipeline;
+    qryPacienteNOMEPACIENTE: TStringField;
+    qryPacienteDATAHORAENTRADA: TStringField;
+    qryPacienteMEDICO: TStringField;
+    qryPacienteCONVENIO: TStringField;
+    qryPacienteALA: TStringField;
+    qryPacienteNROLEITO: TStringField;
+    qryPacienteCODPACIENTE: TIntegerField;
+    qryPacienteCODATENDIMENTO: TIntegerField;
+    ppDBText1: TppDBText;
+    ppDBText3: TppDBText;
+    ppLabel2: TppLabel;
+    qryEtiquetaNOMEPACIENTE: TStringField;
+    qryEtiquetaALA: TStringField;
+    qryEtiquetaNROLEITO: TStringField;
+    ppLabel1: TppLabel;
+    btnVisitante: TBitBtn;
+    btnAcompanhante: TBitBtn;
+    tmrPaciente: TTimer;
+    procedure FormCreate(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure dbgrdPacienteDrawColumnCell(Sender: TObject; const Rect: TRect;
+      DataCol: Integer; Column: TColumn; State: TGridDrawState);
+    procedure btnBuscaPacienteClick(Sender: TObject);
+    procedure edtBuscaPacienteChange(Sender: TObject);
+    procedure BitBtn1Click(Sender: TObject);
+    procedure BitBtn2Click(Sender: TObject);
+    procedure tmrPacienteTimer(Sender: TObject);
+    procedure edtBuscaPacienteKeyPress(Sender: TObject; var Key: Char);
+  private
+    { Private declarations }
+  public
+    { Public declarations }
+  end;
+
+var
+  frmEtiqueta: TfrmEtiqueta;
+
+implementation
+
+{$R *.dfm}
+
+procedure TfrmEtiqueta.btnBuscaPacienteClick(Sender: TObject);
+begin
+  qryPaciente.Close;
+  qryPaciente.Parameters.ParamByName('paciente').Value := '%' + edtBuscaPaciente.Text + '%';
+  qryPaciente.Open;
+  if (qryPaciente.RecordCount = 0) then
+  begin
+    Application.MessageBox('Nome de Paciente não consta na lista.','Alerta',MB_OK+MB_ICONINFORMATION);
+    qryPaciente.Close;
+    edtBuscaPaciente.Clear;
+    qryPaciente.Open;
+  end
+  else if (Trim(edtBuscaPaciente.Text)='') then
+  begin
+    Application.MessageBox('Campo Vazio.Favor entrar com o Nome do Paciente.','Aviso',MB_OK+MB_ICONINFORMATION);
+  end;
+end;
+
+procedure TfrmEtiqueta.BitBtn1Click(Sender: TObject);
+begin
+  qryEtiqueta.Parameters.ParamByName('codpaciente').Value := qryPacienteCODPACIENTE.Value;
+  qryEtiqueta.Parameters.ParamByName('codatendimento').Value := qryPacienteCODATENDIMENTO.Value;
+  ppLabel1.Caption := 'VISITANTE';
+  qryEtiqueta.Close;
+  qryEtiqueta.Open;
+  ppVisitante.PrinterSetup.Copies := 1;
+  ppVisitante.Print;
+end;
+
+procedure TfrmEtiqueta.BitBtn2Click(Sender: TObject);
+begin
+  qryEtiqueta.Parameters.ParamByName('codpaciente').Value := qryPacienteCODPACIENTE.Value;
+  qryEtiqueta.Parameters.ParamByName('codatendimento').Value := qryPacienteCODATENDIMENTO.Value;
+  ppLabel1.Caption := 'ACOMPANHANTE';
+  qryEtiqueta.Close;
+  qryEtiqueta.Open;
+  ppVisitante.PrinterSetup.Copies := 1;
+  ppVisitante.Print;
+end;
+
+procedure TfrmEtiqueta.dbgrdPacienteDrawColumnCell(Sender: TObject;
+  const Rect: TRect; DataCol: Integer; Column: TColumn; State: TGridDrawState);
+begin
+  with dbgrdPaciente do
+  begin
+    If gdSelected in State then
+    begin
+      Canvas.Brush.Color := RGB(141,182,205);
+      Canvas.Font.Color := clWhite;
+    end
+    else
+    if Odd(dsPaciente.DataSet.RecNo) then
+    begin
+      Canvas.Brush.Color := clGradientInactiveCaption;
+    end
+    else
+    begin
+      Canvas.Brush.Color := clWindow;
+    end;
+
+    Canvas.FillRect(Rect);
+    DefaultDrawColumnCell(Rect,DataCol,Column,State);
+  end;
+end;
+
+procedure TfrmEtiqueta.edtBuscaPacienteChange(Sender: TObject);
+begin
+  qryPaciente.Close;
+  qryPaciente.Parameters.ParamByName('paciente').Value := '%' + edtBuscaPaciente.Text + '%';
+  qryPaciente.Open;
+
+  ShowScrollBar(dbgrdPaciente.Handle,SB_VERT,True);
+
+  {qryPaciente.Locate('NOMEPACIENTE',edtBuscaPaciente.Text,[loCaseInsensitive,loPartialKey]);
+  if (trim(edtBuscaPaciente.Text) = '') then
+  begin
+    qryPaciente.First;
+  end; }
+
+  {if (qryPaciente.RecordCount = 0) then
+  begin
+    Application.MessageBox('Nome de Paciente não consta na lista.','Alerta',MB_OK+MB_ICONINFORMATION);
+    qryPaciente.Close;
+    edtBuscaPaciente.Clear;
+    qryPaciente.Open;
+  end;  }
+end;
+
+procedure TfrmEtiqueta.edtBuscaPacienteKeyPress(Sender: TObject; var Key: Char);
+begin
+  If(key in['0'..'9',#13] ) then
+  begin
+    key:=#0;
+    Application.MessageBox('O sistema não aceita numeros como entradas, favor informe o nome do Paciente.','Aviso',MB_OK+MB_IconQuestion);
+  end;
+end;
+
+procedure TfrmEtiqueta.FormClose(Sender: TObject; var Action: TCloseAction);
+begin
+  if Application.MessageBox('Deseja encerrar o Programa?','Informação',MB_YESNO+MB_ICONQUESTION) <> IDYES then
+  begin
+     Action := caNone
+  end
+  else
+  begin
+    Action := caFree;
+    qryPaciente.Close;
+    qryEtiqueta.Close;
+  end;
+
+end;
+
+procedure TfrmEtiqueta.FormCreate(Sender: TObject);
+var
+REG:TRegistry;
+begin
+  qryPaciente.Close;
+  qryPaciente.Parameters.ParamByName('paciente').Value := '%';
+  REG := TRegistry.Create;
+  REG.RootKey := HKEY_CURRENT_USER;
+  REG.OpenKey('Software\Microsoft\Windows\CurrentVersion\Run\',false);
+  REG.WriteString('Meu Programa',ParamStr(0));
+  REG.CloseKey;
+  REG.Free;
+  //ShowMessage('Programa adicionado na inicialização do windows com sucesso!');
+  qryPaciente.Open;
+
+  qryEtiqueta.Close;
+  qryEtiqueta.Open;
+end;
+
+
+procedure TfrmEtiqueta.tmrPacienteTimer(Sender: TObject);
+begin
+  qryPaciente.Close;
+  qryPaciente.Parameters.ParamByName('paciente').Value := '%';
+  edtBuscaPaciente.Clear;
+  qryPaciente.Open;
+end;
+
+end.

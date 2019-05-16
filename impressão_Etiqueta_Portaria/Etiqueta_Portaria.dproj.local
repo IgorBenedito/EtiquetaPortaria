@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>2016/01/18 08:44:32.000.562,=C:\Users\usuario\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2016/01/18 09:17:45.000.540,A:\Igor\impressão_Etiqueta_Portaria\uImpressao.dfm=C:\Users\usuario\Documents\RAD Studio\Projects\Unit1.dfm</Transaction>
+    <Transaction>2016/01/18 09:17:45.000.540,A:\Igor\impressão_Etiqueta_Portaria\uImpressao.pas=C:\Users\usuario\Documents\RAD Studio\Projects\Unit1.pas</Transaction>
+    <Transaction>2016/01/18 09:18:34.000.818,A:\Igor\impressão_Etiqueta_Portaria\Etiqueta_Portaria.dproj=C:\Users\usuario\Documents\RAD Studio\Projects\Project1.dproj</Transaction>
+  </Transactions>
+</BorlandProject>
